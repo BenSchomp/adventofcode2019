@@ -7,37 +7,37 @@ MULTIPLY = 2
 STOP = 99
 
 def day_one( data, noun, verb ):
-	data[1] = noun
-	data[2] = verb
+  data[1] = noun
+  data[2] = verb
 
-	i = 0
-	while( data[i] != STOP ):
-		opCode = data[i]
-		p1 = data[i+1]
-		p2 = data[i+2]
-		p3 = data[i+3]
-		#print( i, opCode, data )
+  i = 0
+  while( data[i] != STOP ):
+    opCode = data[i]
+    p1 = data[i+1]
+    p2 = data[i+2]
+    p3 = data[i+3]
+    #print( i, opCode, data )
 
-		if opCode == ADD:
-			data[p3] = data[p1] + data[p2]
-		elif opCode == MULTIPLY:
-			data[p3] = data[p1] * data[p2]
-		# else STOP
+    if opCode == ADD:
+      data[p3] = data[p1] + data[p2]
+    elif opCode == MULTIPLY:
+      data[p3] = data[p1] * data[p2]
+    # else STOP
 
-		i += 4
+    i += 4
 
-	#print( i, data[i], data )
-	return data[0]
+  #print( i, data[i], data )
+  return data[0]
 
 def day_two( data, needle ):
-	for noun in range(100):
-		for verb in range(100):
-			#print( noun, verb )
-			if( day_one( data[:], noun, verb ) == needle ):
-				return ( noun, verb, 100 * noun + verb )
+  for noun in range(100):
+    for verb in range(100):
+      #print( noun, verb )
+      if( day_one( data[:], noun, verb ) == needle ):
+        return ( noun, verb, 100 * noun + verb )
 
-	print( "Not found:", needle )
-	exit( -1 )
+  print( "Not found:", needle )
+  exit( -1 )
 
 print( 'day_one:', day_one( my_input[:], 12, 2 ) )
 #print( 'day_two:', day_two( my_input[:], 3409710 ) )
