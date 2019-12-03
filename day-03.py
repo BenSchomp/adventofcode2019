@@ -5,59 +5,59 @@ wire2 = ['L1006','D998','R94','D841','R911','D381','R532','U836','L299','U237','
 #wire2 = ['U7','R6','D4','L4']
 
 def unpack( cmd ):
-	direction = cmd[0]
-	distance = cmd[1:]
+  direction = cmd[0]
+  distance = cmd[1:]
 
-	dx = dy = 0
-	if direction == 'R':
-		dx = 1
-	elif direction == 'L':
-		dx = -1
-	elif direction == 'U':
-		dy = 1
-	elif direction == 'D':
-		dy = -1
-	else:
-		print( 'bad direction:', direction, cmd )
-		exit(-1)
+  dx = dy = 0
+  if direction == 'R':
+    dx = 1
+  elif direction == 'L':
+    dx = -1
+  elif direction == 'U':
+    dy = 1
+  elif direction == 'D':
+    dy = -1
+  else:
+    print( 'bad direction:', direction, cmd )
+    exit(-1)
 
-	return (dx, dy, int(distance))
+  return (dx, dy, int(distance))
 
 points = {}
 
 steps = 0
 (x,y) = (0,0)
 for cmd in wire1:
-	(dx, dy, d) = unpack(cmd)
-	for i in range(d):
-		steps += 1
-		x += dx
-		y += dy
+  (dx, dy, d) = unpack(cmd)
+  for i in range(d):
+    steps += 1
+    x += dx
+    y += dy
 
-		# mark the point as visited
-		points[(x,y)] = steps
+    # mark the point as visited
+    points[(x,y)] = steps
 
 closest = least = None
 steps = 0
 (x,y) = (0,0)
 for cmd in wire2:
-	(dx, dy, d) = unpack(cmd)
-	for i in range(d):
-		steps += 1
-		x += dx
-		y += dy
+  (dx, dy, d) = unpack(cmd)
+  for i in range(d):
+    steps += 1
+    x += dx
+    y += dy
 
-		# check if the point was already visited
-		if (x,y) in points:
-			# part_one cares about the manhattan distance from the intersection
-			distance = abs(x) + abs(y)
-			if not closest or distance < closest:
-				closest = distance
+    # check if the point was already visited
+    if (x,y) in points:
+      # part_one cares about the manhattan distance from the intersection
+      distance = abs(x) + abs(y)
+      if not closest or distance < closest:
+        closest = distance
 
-			# part_two cares about the number of steps to reach the intersection
-			total_steps = points[(x,y)] + steps
-			if not least or total_steps < least:
-				least = total_steps
+      # part_two cares about the number of steps to reach the intersection
+      total_steps = points[(x,y)] + steps
+      if not least or total_steps < least:
+        least = total_steps
 
 print( 'closest:', closest )
 print( 'min steps:', least )
