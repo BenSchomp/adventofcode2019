@@ -24,14 +24,7 @@ my_input = [
 '.##..#.#..##..##.#..##..#',
 '.##..#####....#####.#.#.#',
 '#..#..#..##...#..#.#.#.##']
-example1 = ['.#.##','#..#.','.#..#','..#..','#..##']
-example2 = [
-'.#..#',
-'.....',
-'#####',
-'....#',
-'...##']
-example3 = [
+example1 = [
 '......#.#.',
 '#..#.#....',
 '..#######.',
@@ -41,26 +34,13 @@ example3 = [
 '#..#....#.',
 '.##.#..###',
 '##...#..#.',
-'.#....####'
-]
-example4 = [
-'#.#...#.#.',
-'.###....#.',
-'.#....#...',
-'##.#.#.#.#',
-'....#.#.#.',
-'.##..###.#',
-'..#...##..',
-'..##....##',
-'......#...',
-'.####.###.'
-]
+'.#....####']
 
 from fractions import Fraction
 
 asteroids = set()
 y = 0
-for line in example4:
+for line in my_input:
   x = 0
   for digit in line:
     if digit == '#':
@@ -93,17 +73,21 @@ for location in asteroids:
         slope = '-0'
     else:
       slope = Fraction( rise, run )
-    visible.add(slope)
+      # objects along the same slope are blocked,
+      #  hence the tracking via the visible set
+      # however the location might between in the middle
+      #  of two objects on the same slope, so make each object's
+      #  slope "unique" by indicating if it is to the Left or Right
+      #  of vertical
+      if run < 0:
+        slope = str(slope)+'L'
+      else:
+        slope = str(slope)+'R'
 
-  print( len(visible), location, visible )
-  #if location == (5,8):
-    #for i in visible:
-      #print( i )
-    #exit()
+    visible.add(slope)
 
   if len(visible) > best:
     best = len(visible)
     best_location = location
 
 print( best, best_location )
-
