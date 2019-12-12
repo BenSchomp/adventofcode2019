@@ -126,8 +126,8 @@ angles = sorted(angles)
 
 # start laser straight up (ie pi/2)
 a = 0
-a_max = len(angles)-1
-while a <= a_max and angles[a] < (pi/2):
+num_angles = len(angles)
+while a < num_angles and angles[a] < (pi/2):
   a += 1
 
 # laser is set ... start shootin' shit
@@ -147,4 +147,4 @@ while len(targets) > 0:
       print( 'part_two:', casualty[1][0]*100 + casualty[1][1] )
       exit()
 
-  a = (a + 1) % a_max
+  a = (a + 1) % num_angles
