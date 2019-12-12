@@ -75,10 +75,9 @@ def getAngle( source, dest ):
 def getDist( source, dest ):
   return sqrt((dest[0]-source[0])**2 + (dest[1]-source[1])**2)
 
-
 asteroids = set() 
 y = 0
-for line in example3:
+for line in my_input:
   x = 0
   for digit in line:
     if digit == '#':
@@ -103,7 +102,7 @@ for location in asteroids:
     best = len(visible)
     best_location = location
 
-print( 'part_one:', best, best_location )
+print( 'part_one:', best )
 
 # part_two
 # calculate angle and distance from laser location to each asteroid
@@ -130,27 +129,22 @@ a = 0
 a_max = len(angles)-1
 while a <= a_max and angles[a] < (pi/2):
   a += 1
-a %= a_max
 
 # laser is set ... start shootin' shit
-print( 'part_two' )
-count = miss = 0
+count = 0
 while len(targets) > 0:
   cur_angle = angles[a]
 
   if cur_angle in targets:
     count += 1
     casualty = targets[cur_angle].pop(0)
-    print( count, casualty[1], cur_angle, casualty[0] )
+    #print( count, casualty[1], cur_angle, casualty[0] )
 
     if len(targets[cur_angle]) < 1:
       del targets[cur_angle]
-  else:
-    print('.', end='')
-    miss += 1
-    if miss > 20:
-      print( angles )
-      print( targets )
+
+    if count == 200:
+      print( 'part_two:', casualty[1][0]*100 + casualty[1][1] )
       exit()
 
   a = (a + 1) % a_max
