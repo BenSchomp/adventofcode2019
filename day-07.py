@@ -2,75 +2,106 @@ my_input = [ 3,8,1001,8,10,8,105,1,0,0,21,38,63,72,81,106,187,268,349,430,99999,
 example = [3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0]
 example2 = [3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5]
 
-ADD = 1
-MULTIPLY = 2
-SET = 3
-GET = 4
-JUMPT = 5
-JUMPF = 6
-LT = 7
-EQ = 8
-STOP = 99
-POSITION = '0'
-IMMEDIATE = '1'
 
-def process( data, i, the_input ):
-  output = None
-  while( 1 ):
-    #print( data )
-    cur = str(data[i]).zfill(5)
-    opCode = int(cur[-2:])
-    (mode1, mode2, mode3) = (cur[-3], cur[-4], cur[-5])
+class Intcode:
+  ADD = 1
+  MULTIPLY = 2
+  SET = 3
+  GET = 4
+  JUMPT = 5
+  JUMPF = 6
+  LT = 7
+  EQ = 8
+  STOP = 99
 
-    if opCode == STOP:
-      return None
+  POSITION = 0
+  IMMEDIATE = 1
+  RELATIVE = 2
 
-    if opCode in [ SET ]:
-      p1 = int(data[i+1])
-    else:
-      p1 = int(data[data[i+1]]) if mode1 == POSITION else int(data[i+1])
-    if not opCode in [ SET, GET ]:
-      p2 = int(data[data[i+2]]) if mode2 == POSITION else int(data[i+2])
-    if opCode in [ ADD, MULTIPLY, LT, EQ ]:
-      p3 = int(data[i+3])
+  def __init__( self, init_program, init_inputs=None ):
+    self.program = init_program[:]
+    self.pc = 0 # the program counter
+    self.inputs = []
+    self.addInput( init_inputs )
+    self.output = None
 
-    if opCode == ADD:
-      data[p3] = p1 + p2
-      i += 4
-    elif opCode == MULTIPLY:
-      data[p3] = p1 * p2
-      i += 4
-    elif opCode == SET:
-      data[p1] = the_input.pop(0)
-      i += 2
-    elif opCode == GET:
-      i += 2
-      return (p1, i)
-    elif opCode == JUMPT:
-      if p1 != 0:
-        i = p2
+  def getOutput( self ):
+    return self.output
+
+  def addInput( self, new_input=None ):
+    if new_input is not None:
+      if isinstance( new_input, list ):
+        self.inputs += new_input
       else:
-        i += 3
-    elif opCode == JUMPF:
-      if p1 == 0:
-        i = p2
+        self.inputs.append( new_input )
+
+  def process( self, new_input=None ):
+    self.addInput( new_input )
+
+    i = self.pc
+    data = self.program
+    while( 1 ):
+      # extract the opCode and mode settings
+      cur = str(data[i]).zfill(5)
+      opCode = int(cur[-2:])
+      (mode1, mode2, mode3) = (int(cur[-3]), int(cur[-4]), int(cur[-5]))
+
+      # nothing to do
+      if opCode == self.STOP:
+        self.pc = i
+        return None
+
+      # extract parameters p1, p2, p3
+      if opCode in [ self.SET ]:
+        p1 = int(data[i+1])
       else:
-        i += 3
-    elif opCode == LT:
-      if p1 < p2:
-        data[p3] = 1
+        p1 = int(data[data[i+1]]) if mode1 == self.POSITION else int(data[i+1])
+
+      if not opCode in [ self.SET, self.GET ]:
+        p2 = int(data[data[i+2]]) if mode2 == self.POSITION else int(data[i+2])
+
+      if opCode in [ self.ADD, self.MULTIPLY, self.LT, self.EQ ]:
+        p3 = int(data[i+3])
+
+      if opCode == self.ADD:
+        data[p3] = p1 + p2
+        i += 4
+      elif opCode == self.MULTIPLY:
+        data[p3] = p1 * p2
+        i += 4
+      elif opCode == self.SET:
+        data[p1] = self.inputs.pop(0)
+        i += 2
+      elif opCode == self.GET:
+        i += 2
+        self.pc = i
+        self.output = p1
+        return self.output
+      elif opCode == self.JUMPT:
+        if p1 != 0:
+          i = p2
+        else:
+          i += 3
+      elif opCode == self.JUMPF:
+        if p1 == 0:
+          i = p2
+        else:
+          i += 3
+      elif opCode == self.LT:
+        if p1 < p2:
+          data[p3] = 1
+        else:
+          data[p3] = 0
+        i += 4
+      elif opCode == self.EQ:
+        if p1 == p2:
+          data[p3] = 1
+        else:
+          data[p3] = 0
+        i += 4
       else:
-        data[p3] = 0
-      i += 4
-    elif opCode == EQ:
-      if p1 == p2:
-        data[p3] = 1
-      else:
-        data[p3] = 0
-      i += 4
-    else:
-      print( 'unknown opCode:', opCode )
-      exit(-1)
+        print( 'unknown opCode:', opCode )
+        exit(-1)
 
 
 def part_one( data ):
@@ -91,7 +122,8 @@ def part_one( data ):
 
             result = 0
             for phase in [a,b,c,d,e]:
-              (result, x) = process( data[:], 0, [phase,result])
+              amp = Intcode( data[:] )
+              result = amp.process( [phase,result])
             if result > max:
               max = result
 
@@ -116,30 +148,18 @@ def part_two( data ):
 
             phases = [x+5 for x in [a,b,c,d,e]]
 
-            amp_data = []
-            amp_input = []
-            result = []
-            pc = []
-            for i in range(5):
-              amp_data.append( data[:] )
-              result.append(0)
-              pc.append(0)
-              amp_input.append([phases[i]])
-            amp_input[0].append(0)
+            amp = []
+            for p in phases:
+              amp.append( Intcode(data[:], p) )
 
-            cur_amp = 0
-            while( 1 ):
-              last_result = process( amp_data[cur_amp], pc[cur_amp], amp_input[cur_amp])
-              if last_result:
-                (result[cur_amp], pc[cur_amp]) = last_result
-              else:
-                break
+            cur = 0
+            last_result = 0
+            while( last_result is not None ):
+              last_result = amp[cur].process( last_result )
+              cur = (cur + 1) % 5
 
-              cur_amp = (cur_amp + 1) % 5
-              amp_input[cur_amp].append(last_result[0])
-
-            if result[4] > max:
-              max = result[4]
+            if amp[4].getOutput() > max:
+              max = amp[4].getOutput()
 
   return max
 
