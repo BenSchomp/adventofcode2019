@@ -1,3 +1,5 @@
+from collections import namedtuple
+Param = namedtuple('Param', 'addr value')
 
 class Intcode:
   ADD = 1
@@ -17,6 +19,7 @@ class Intcode:
   def __init__( self, init_program, init_inputs=None ):
     self.program = init_program[:]
     self.pc = 0 # the program counter
+    self.base = 0
     self.inputs = []
     self.addInput( init_inputs )
     self.output = None
@@ -31,70 +34,82 @@ class Intcode:
       else:
         self.inputs.append( new_input )
 
+  def getParam( self, p, mode ):
+    if mode == self.IMMEDIATE: # 1
+      addr = self.pc + p
+
+    elif mode == self.POSITION: # 0
+      addr = self.program[self.pc + p]
+
+    elif mode == self.RELATIVE: # 2
+      addr = self.program[self.pc + p] + self.base
+
+    value = int(self.program[addr])
+    p = Param(addr, value)
+
+    return p
+
   def process( self, new_input=None ):
     self.addInput( new_input )
 
-    i = self.pc
-    data = self.program
     while( 1 ):
       # extract the opCode and mode settings
-      cur = str(data[i]).zfill(5)
+      #print( self.program, self.pc, self.inputs ) # DEBUG
+      cur = str(self.program[self.pc]).zfill(5)
       opCode = int(cur[-2:])
-      (mode1, mode2, mode3) = (int(cur[-3]), int(cur[-4]), int(cur[-5]))
+      p1 = p2 = p3 = None
 
       # nothing to do
       if opCode == self.STOP:
-        self.pc = i
         return None
 
       # extract parameters p1, p2, p3
-      if opCode in [ self.SET ]:
-        p1 = int(data[i+1])
-      else:
-        p1 = int(data[data[i+1]]) if mode1 == self.POSITION else int(data[i+1])
+      (mode1, mode2, mode3) = (int(cur[-3]), int(cur[-4]), int(cur[-5]))
+      p1 = self.getParam( 1, mode1)
 
       if not opCode in [ self.SET, self.GET ]:
-        p2 = int(data[data[i+2]]) if mode2 == self.POSITION else int(data[i+2])
+        p2 = self.getParam( 2, mode2 )
 
       if opCode in [ self.ADD, self.MULTIPLY, self.LT, self.EQ ]:
-        p3 = int(data[i+3])
+        p3 = self.getParam( 3, mode3 )
 
-      if opCode == self.ADD:
-        data[p3] = p1 + p2
-        i += 4
-      elif opCode == self.MULTIPLY:
-        data[p3] = p1 * p2
-        i += 4
-      elif opCode == self.SET:
-        data[p1] = self.inputs.pop(0)
-        i += 2
-      elif opCode == self.GET:
-        i += 2
-        self.pc = i
-        self.output = p1
+      #print( opCode, p1, p2, p3 ) # DEBUG
+
+      if opCode == self.ADD: # 1
+        self.program[p3.addr] = p1.value + p2.value
+        self.pc += 4
+      elif opCode == self.MULTIPLY: # 2
+        self.program[p3.addr] = p1.value * p2.value
+        self.pc += 4
+      elif opCode == self.SET: # 3
+        self.program[p1.addr] = self.inputs.pop(0)
+        self.pc += 2
+      elif opCode == self.GET: # 4
+        self.pc += 2
+        self.output = p1.value
         return self.output
-      elif opCode == self.JUMPT:
-        if p1 != 0:
-          i = p2
+      elif opCode == self.JUMPT: # 5
+        if p1.value != 0:
+          self.pc = p2.value
         else:
-          i += 3
-      elif opCode == self.JUMPF:
-        if p1 == 0:
-          i = p2
+          self.pc += 3
+      elif opCode == self.JUMPF: # 6
+        if p1.value == 0:
+          self.pc = p2.value
         else:
-          i += 3
-      elif opCode == self.LT:
-        if p1 < p2:
-          data[p3] = 1
+          self.pc += 3
+      elif opCode == self.LT: # 7
+        if p1.value < p2.value:
+          self.program[p3.addr] = 1
         else:
-          data[p3] = 0
-        i += 4
-      elif opCode == self.EQ:
-        if p1 == p2:
-          data[p3] = 1
+          self.program[p3.addr] = 0
+        self.pc += 4
+      elif opCode == self.EQ: # 8
+        if p1.value == p2.value:
+          self.program[p3.addr] = 1
         else:
-          data[p3] = 0
-        i += 4
+          self.program[p3.addr] = 0
+        self.pc += 4
       else:
         print( 'unknown opCode:', opCode )
         exit(-1)
