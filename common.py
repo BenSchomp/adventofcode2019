@@ -10,6 +10,7 @@ class Intcode:
   JUMPF = 6
   LT = 7
   EQ = 8
+  ADJBASE = 9
   STOP = 99
 
   POSITION = 0
@@ -18,6 +19,7 @@ class Intcode:
 
   def __init__( self, init_program, init_inputs=None ):
     self.program = init_program[:]
+    self.max_addr = len(self.program) - 1
     self.pc = 0 # the program counter
     self.base = 0
     self.inputs = []
@@ -44,6 +46,10 @@ class Intcode:
     elif mode == self.RELATIVE: # 2
       addr = self.program[self.pc + p] + self.base
 
+    if addr > self.max_addr:
+      self.program += [0] * (addr - self.max_addr)
+      self.max_addr = len(self.program) - 1
+
     value = int(self.program[addr])
     p = Param(addr, value)
 
@@ -54,7 +60,7 @@ class Intcode:
 
     while( 1 ):
       # extract the opCode and mode settings
-      #print( self.program, self.pc, self.inputs ) # DEBUG
+      #print( self.program, self.pc, self.inputs, self.base ) # DEBUG
       cur = str(self.program[self.pc]).zfill(5)
       opCode = int(cur[-2:])
       p1 = p2 = p3 = None
@@ -67,7 +73,7 @@ class Intcode:
       (mode1, mode2, mode3) = (int(cur[-3]), int(cur[-4]), int(cur[-5]))
       p1 = self.getParam( 1, mode1)
 
-      if not opCode in [ self.SET, self.GET ]:
+      if not opCode in [ self.SET, self.GET, self.ADJBASE ]:
         p2 = self.getParam( 2, mode2 )
 
       if opCode in [ self.ADD, self.MULTIPLY, self.LT, self.EQ ]:
@@ -110,6 +116,9 @@ class Intcode:
         else:
           self.program[p3.addr] = 0
         self.pc += 4
+      elif opCode == self.ADJBASE: # 9
+        self.base += p1.value
+        self.pc += 2
       else:
         print( 'unknown opCode:', opCode )
-        exit(-1)
+        exit()
