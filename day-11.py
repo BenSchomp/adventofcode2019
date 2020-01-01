@@ -89,12 +89,3 @@ for y in range(y_min, y_max+1):
   	else:
   	  print( '.', end='' )
   print()	
-
-
-
-
-
-
-
-
-
