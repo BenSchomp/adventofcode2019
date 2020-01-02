@@ -36,6 +36,9 @@ class Intcode:
       else:
         self.inputs.append( new_input )
 
+  def hack( self, addr, value ):
+    self.program[addr] = value
+
   def getParam( self, p, mode ):
     if mode == self.IMMEDIATE: # 1
       addr = self.pc + p
@@ -67,6 +70,7 @@ class Intcode:
 
       # nothing to do
       if opCode == self.STOP:
+        # client can check for None return as a signal that the program is done
         return None
 
       # extract parameters p1, p2, p3
@@ -88,6 +92,10 @@ class Intcode:
         self.program[p3.addr] = p1.value * p2.value
         self.pc += 4
       elif opCode == self.SET: # 3
+        if len(self.inputs) == 0:
+          # not perfect, but a client can check for empty list as a signal
+          #  that the input buffer is empty
+          return []
         self.program[p1.addr] = self.inputs.pop(0)
         self.pc += 2
       elif opCode == self.GET: # 4
